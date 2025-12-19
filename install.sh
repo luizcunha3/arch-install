@@ -37,8 +37,13 @@ info "Instalando zsh..."
 info "Instalando wget"
 (sudo pacman -S --noconfirm needed wget > /dev/null 2>&1) & spinner $!
 
-info "Definindo zsh como shell padrao"
-chsh -s $(which zsh)
+info "Configurando ZSH como shell padrão..."
+# Pega o nome do usuário que rodou o script, mesmo que esteja usando sudo
+USER_REAL=$(logname)
+
+# Altera o shell silenciosamente
+(sudo chsh -s /usr/bin/zsh "$USER_REAL" > /dev/null 2>&1) &
+spinner $!
 
 info "Instalando Oh My ZSH" 
 sh -c "$(wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O -)"
