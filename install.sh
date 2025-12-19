@@ -1,12 +1,15 @@
 #!/bin/bash
 
-# Função do Spinner (Animação)
-# Ela recebe o PID (ID do processo) do comando anterior
+# Funções de suporte
+info() {
+    echo -e "\e[34m[INFO]\e[0m $1"
+}
+
 spinner() {
     local pid=$1
     local delay=0.1
     local spinstr='|/-\'
-    while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
+    while ps -p "$pid" > /dev/null; do
         local temp=${spinstr#?}
         printf " [%c]  " "$spinstr"
         local spinstr=$temp${spinstr%"$temp"}
@@ -16,34 +19,33 @@ spinner() {
     printf "    \b\b\b\b"
 }
 
-# Função para mensagens coloridas
-info() {
-    echo -e "\e[34m[INFO]\e[0m $1"
-}
-
-info "Preparando ambiente"
+# Início do processo
+info "Autenticando..."
 sudo -v
-# Atualiza o timestamp do sudo enquanto o script estiver rodando
-while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
-# 2. Instalando o Git
+# Instalações Pacman
 info "Instalando git..."
-(sudo pacman -S --noconfirm --needed git > /dev/null 2>&1) & spinner $!
+(sudo pacman -S --noconfirm --needed git > /dev/null 2>&1) &
+spinner $!
+echo ""
 
-# 3. Instalando o ZSH
 info "Instalando zsh..."
-(sudo pacman -S --noconfirm --needed zsh > /dev/null 2>&1) & spinner $!
+(sudo pacman -S --noconfirm --needed zsh > /dev/null 2>&1) &
+spinner $!
+echo ""
 
-info "Instalando wget"
-(sudo pacman -S --noconfirm --needed wget > /dev/null 2>&1) & spinner $!
+# Oh My Zsh
+info "Configurando Oh My Zsh..."
+# --unattended: evita que o instalador faça perguntas ou mude o shell sozinho
+(sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended > /dev/null 2>&1) &
+spinner $!
+echo ""
 
-info "Configurando ZSH como shell padrão..."
-# Pega o nome do usuário que rodou o script, mesmo que esteja usando sudo
+# Shell Padrão
+info "Definindo ZSH como shell padrão..."
 USER_REAL=$(logname)
-
-# Altera o shell silenciosamente
 (sudo chsh -s /usr/bin/zsh "$USER_REAL" > /dev/null 2>&1) &
 spinner $!
+echo ""
 
-info "Instalando Oh My ZSH" 
-sh -c "$(wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O -)"
+info "Setup concluído com sucesso!"
