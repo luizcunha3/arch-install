@@ -35,7 +35,7 @@ info "Instalando zsh..."
 (sudo pacman -S --noconfirm --needed zsh > /dev/null 2>&1) & spinner $!
 
 info "Instalando wget"
-(sudo pacman -S --noconfirm needed wget > /dev/null 2>&1) & spinner $!
+(sudo pacman -S --noconfirm --needed wget > /dev/null 2>&1) & spinner $!
 
 info "Configurando ZSH como shell padrão..."
 # Pega o nome do usuário que rodou o script, mesmo que esteja usando sudo
