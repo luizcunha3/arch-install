@@ -1,10 +1,11 @@
 #!/bin/bash
 
-# Funções de suporte
+# --- FUNÇÕES DE SUPORTE ---
 info() {
     echo -e "\e[34m[INFO]\e[0m $1"
 }
 
+# Função do Spinner revisada para maior compatibilidade
 spinner() {
     local pid=$1
     local delay=0.1
@@ -19,33 +20,42 @@ spinner() {
     printf "    \b\b\b\b"
 }
 
-# Início do processo
-info "Autenticando..."
-sudo -v
+# --- 1. VALIDAÇÃO DE PRIVILÉGIOS ---
+info "Solicitando permissão de administrador..."
+if ! sudo -v; then
+    echo -e "\e[31m[ERRO]\e[0m Senha incorreta ou permissão negada."
+    exit 1
+fi
 
-# Instalações Pacman
-info "Instalando git..."
-(sudo pacman -S --noconfirm --needed git > /dev/null 2>&1) &
+# Loop para manter o sudo vivo até o fim do script
+while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+
+# --- 2. INSTALAÇÃO DE PACOTES (PACMAN) ---
+info "Atualizando repositórios e instalando Git..."
+(sudo pacman -Syu --noconfirm --needed git > /dev/null 2>&1) &
 spinner $!
 echo ""
 
-info "Instalando zsh..."
+info "Instalando ZSH..."
 (sudo pacman -S --noconfirm --needed zsh > /dev/null 2>&1) &
 spinner $!
 echo ""
 
-# Oh My Zsh
-info "Configurando Oh My Zsh..."
-# --unattended: evita que o instalador faça perguntas ou mude o shell sozinho
+# --- 3. OH MY ZSH (MODO NÃO INTERATIVO) ---
+info "Instalando Oh My Zsh..."
+# --unattended: evita que o script mude o shell ou abra o zsh agora
 (sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended > /dev/null 2>&1) &
 spinner $!
 echo ""
 
-# Shell Padrão
+# --- 4. CONFIGURAÇÃO FINAL ---
 info "Definindo ZSH como shell padrão..."
 USER_REAL=$(logname)
 (sudo chsh -s /usr/bin/zsh "$USER_REAL" > /dev/null 2>&1) &
 spinner $!
 echo ""
 
-info "Setup concluído com sucesso!"
+info "------------------------------------------"
+info "Setup finalizado com sucesso!"
+info "Por favor, reinicie seu terminal ou sessão."
+info "------------------------------------------"
